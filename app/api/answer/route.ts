@@ -17,11 +17,31 @@ export async function GET(req: Request) {
     prompt: q,                         // or messages: [...]
   });
 
-  // ── NEW in v4 ──────────────────────────────────────────────
-  // Converts the stream into an HTTP/2‑friendly response with data chunks
-  // The client needs to handle the Vercel AI SDK Data Stream format.
-  // Sources will likely be included in one of the data chunks.
-  return result.toTextStreamResponse();
+  // custom stream: relay text deltas and append sources block
+  const encoder = new TextEncoder();
+  const allSourcesPromise = result.sources;
+  const stream = new ReadableStream({
+    async start(controller) {
+      for await (const part of result.fullStream) {
+        if (part.type === 'text-delta') {
+          controller.enqueue(encoder.encode(part.textDelta));
+        }
+      }
+      const sourcesArray = await allSourcesPromise;
+      if (sourcesArray?.length) {
+        let sourcesText = '\n---SOURCES---\n';
+        for (const src of sourcesArray) {
+          if (src.sourceType === 'url') {
+            const title = src.title || src.url;
+            sourcesText += `- [${title}](${src.url})\n`;
+          }
+        }
+        controller.enqueue(encoder.encode(sourcesText));
+      }
+      controller.close();
+    }
+  });
+  return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }
 
 

@@ -59,6 +59,14 @@ export default function Search() {
 
     return (
         <main className="max-w-3xl mx-auto px-4 py-8">
+            {/* google search button */}
+            <button
+                disabled={!input.trim()}
+                onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(input.trim())}`, '_blank')}
+                className="mb-4 border rounded-lg px-4"
+            >
+                Search on Google
+            </button>
             {/* search bar */}
             <form onSubmit={onSubmit} className="flex gap-2 mb-6">
                 <input
