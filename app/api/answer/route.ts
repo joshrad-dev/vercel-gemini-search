@@ -10,10 +10,17 @@ export async function GET(req: Request) {
 
   // Gemini‑Pro with Google‑Search grounding
   const result = streamText({
-    model: google('gemini-2.0-flash-001', {
+    model: google('gemini-2.5-flash-preview-04-17', {
       /** toggle if you want live web citations */
       useSearchGrounding: true,
-    }),
+      
+    }), providerOptions:{
+        google:{
+            thinkingConfig: {
+                thinkingBudget: 0,
+              },
+        }
+    },
     prompt: q,                         // or messages: [...]
   });
 
